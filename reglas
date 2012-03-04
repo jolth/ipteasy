@@ -1,0 +1,62 @@
+###################################################################################################
+# Fichero de Reglas										  #
+# Author: Jorge Toro     									  #
+#												  #
+# Ejemplo:  											  #
+# Trafico SMTP											  #
+# $IPT -A INPUT -s 0.0.0.0 -p tcp -m tcp --dport 25 -j ACCEPT					  #
+#												  #
+###################################################################################################
+
+
+### LOOPBACK ###
+$IPT -j ACCEPT -A INPUT -i INT_LOOPBK
+$IPT -j ACCEPT -A OUTPUT -o INT_LOOPBK
+
+
+### PAQUETES ###
+$IPT -N PURGE
+# Permitir ping que coincidan 1/s
+$IPT -j ACCEPT -A PURGE -p icmp --icmp-type echo-request -m limit --limit 1/s 
+# Accepta peticiones Destino-Inalcanzable  
+$IPT -j ACCEPT -A PURGE -p icmp --icmp-type 3
+# Evitar ping de la Muerte
+$IPT -j DROP -A PURGE -p icmp -f
+# Eliminar paquetes null/malformados
+#$IPT -j DROP -A PURGE -p tcp --tcp-flags ALL NONE
+# DoS
+
+# Destinos PURGE
+$IPT -A INPUT -j PURGE
+$IPT -A FORWARD -j PURGE
+
+
+# Accepta ping
+#$IPT -j ACCEPT -A INPUT -p icmp
+$IPT -j ACCEPT -A INPUT -p esp
+$IPT -j ACCEPT -A INPUT -p ah
+#$IPT -j ACCEPT -A OUTPUT -p icmp
+$IPT -j ACCEPT -A OUTPUT -p esp
+$IPT -j ACCEPT -A OUTPUT -p ah
+
+
+### Se ACEPTAN peticiones de DNS ###
+$IPT -A INPUT -p tcp -m tcp --dport $PDNS -j ACCEPT
+$IPT -A INPUT -p udp -m udp --dport $PDNS -j ACCEPT
+$IPT -A OUTPUT -p tcp -m tcp --sport $PDNS -j ACCEPT
+$IPT -A OUTPUT -p udp -m udp --sport $PDNS -j ACCEPT
+
+
+
+### DMZ ###
+$IPT -A INPUT -i $INT_DMZ -s $RDMZ -j ACCEPT
+$IPT -A OUTPUT -o $INT_DMZ -d $RDMZ -j ACCEPT
+#$IPT -j ACCEPT -A INPUT -s $RDM
+#$IPT -j ACCEPT -A OUTPUT -d $RDM
+
+
+
+###  ###
+
+ 
+

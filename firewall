@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+#
+# Author: Jorge Toro
+# jolth@esdebian.org
+#
+# Usage:
+# /etc/init.d/firewall [start|stop|restart|status]
+#
+
+
+# VARIABLES DE AMBIENTE
+vars(){
+
+echo "VARIABLES "
+# Cargando fichero de Configuración:
+if test -e /etc/ipt/ipteasy.conf ; then
+	echo Cargando fichero de configuración 
+	. /etc/ipt/ipteasy.conf
+	sleep 1
+else
+	echo Error: No existe el fichero de Configuración
+	echo " /etc/ipt/ipteasy.conf"
+	echo "Se sale sin configurar las reglas del Firewall"
+	sleep 1
+	exit 3
+fi
+echo " -> OK"
+}
+
+# LIMPIA LAS REGLAS CREADAS
+limpia(){
+
+echo "LIMPIANDO "
+# Remove 
+$IPT -F
+$IPT -F -t nat
+# Remove user define chains
+$IPT -X
+
+}
+
+
+# POLITICAS
+policy(){
+
+echo "POLITICAS "
+echo "Default policy $POLI"
+# Policy 
+$IPT -P INPUT ${POLI[0]}
+$IPT -P FORWARD ${POLI[1]}
+$IPT -P OUTPUT ${POLI[2]}
+echo " -> OK"
+}
+
+
+# REENVIO
+reenvio(){
+
+echo "REENVIO "
+echo "Activando reenvio ip_forward"
+
+echo $IP_FRD > /proc/sys/net/ipv4/ip_forward
+echo $TCP_SYCKS > /proc/sys/net/ipv4/tcp_syncookies
+
+ip_f=`cat /proc/sys/net/ipv4/ip_forward`
+if test "$ip_f" -eq "1" ; then
+	echo ip_forward = $ip_f
+	echo " -> OK"
+else
+	echo -e "Error: No se pudo modificar. \nip_forward=$ip_f" 
+	sleep 2
+	echo -n "Sale con errores.... revisar /etc/ipt/ipteasy.conf"
+	echo -e " o File System"
+	exit 3
+fi
+}
+
+
+# CARGA DE MODULOS NECESARIOS
+addmod(){
+
+echo "ADD MODULES"
+$DEPMOD -a
+for m in `echo ${ADDMODULES[@]}`; do
+	echo $m
+	$MODPROBE $m
+done
+echo " -> OK"
+}
+
+
+# REGLAS DEL FIREWALL
+reglas(){
+
+if test -e $REGLAS ; then
+#	. /etc/ipt/reglas
+	grep . $REGLAS | sed '/^#/d' | while read LINE;
+	do
+	        echo "Cargando: ${LINE}"
+					echo $LINE > $TMREGLAS
+					. $TMREGLAS
+	done | nl
+
+else
+	echo Error: No existe el fichero de reglas
+        echo " /etc/ipt/reglas"
+        echo "Se sale sin configurar las reglas del Firewall"
+	sleep 1
+        exit 3
+fi
+}
+
+
+# CONFIG FIREWALL
+start(){
+
+vars # carga variables
+addmod # agrega modulos
+limpia # Limpia las reglas creadas
+policy # establece politicas por defecto
+reenvio # activa reenvio
+echo "FIREWALL "
+echo "usage: $IPT"
+echo -e "Configurando el Firewall \n"
+reglas # carga las reglas iptables
+sreglas=$? # return reglas
+
+if test $sreglas -ne 0 ; then
+	echo 
+ 	echo Error: Se Encuentran Errores en las Reglas
+        echo " /etc/ipt/reglas"
+        echo "Se sale sin configurar todas las reglas"
+	echo "Mirar errores más arriba .........."
+	sleep 1
+        exit 3
+fi
+
+echo 
+echo " -> OK"
+}
+
+
+
+# MAIN()
+
+
+case $1 in
+
+start)
+echo -e "\t\t\tSTART"
+start
+
+;;
+
+stop)
+echo -e "\t\t\tSTOP"
+limpia # Limpia las reglas creadas
+#delmod
+echo stop
+
+;;
+
+restart)
+echo -e "\t\t\tRESTART"
+$0 stop
+$0 start
+
+;;
+
+status)
+echo -e "\t\t\tSTATUS"
+echo status
+
+;;
+
+*)
+echo "No es una entrada valida...."
+echo "Usage: /etc/init.d/firewall [start|stop|restart|status]"
+exit 1
+;;
+esac
+
+exit 0
+# FIN MAIN
