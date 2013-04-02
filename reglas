@@ -49,8 +49,8 @@ $IPT -A OUTPUT -p udp -m udp --sport $PDNS -j ACCEPT
 
 
 ### DMZ ###
-$IPT -A INPUT -i $INT_DMZ -s $RDMZ -j ACCEPT
-$IPT -A OUTPUT -o $INT_DMZ -d $RDMZ -j ACCEPT
+#$IPT -A INPUT -i $INT_DMZ -s $RDMZ -j ACCEPT
+#$IPT -A OUTPUT -o $INT_DMZ -d $RDMZ -j ACCEPT
 #$IPT -j ACCEPT -A INPUT -s $RDM
 #$IPT -j ACCEPT -A OUTPUT -d $RDM
 
