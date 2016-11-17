@@ -1,5 +1,20 @@
 Crea de forma fácil un Firewall, Route y NAT, con IPTABLES en Linux.
 
+Descargar la última versión:
+# git clone https://github.com/jolth/ipteasy.git
+
+Ingresamos al directorio principal:
+# cd ipteasy/
+
+Antes de instalar puede ser necesario configurar algunos parámetros en los ficheros “reglas” y “ipteasy.conf”.
+
+Instalamos IPTeasy:
+# ./INSTALL.sh
+# update-rc.d /etc/init.d/firewall defaults
+
+Detenemos el demonio y lo corremos:
+# /etc/init.d/firewall stop
+# /etc/init.d/firewall start
 
 Manual:
 http://jolthgs.wordpress.com/desarrollos/ipteasy/
